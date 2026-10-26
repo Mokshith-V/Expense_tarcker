@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kharcha · Expense Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23343a9a'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='sans-serif'%3E%E2%82%B9%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- ============ Login / Register ============ -->
+<div id="auth-view" class="auth" hidden>
+  <section class="auth-intro">
+    <div class="brand brand-lg"><span class="brand-mark">₹</span>Kharcha</div>
+    <h1>Know where every rupee goes.</h1>
+    <p>Log what you spend, set a budget for each category, and see your month at a glance.</p>
+    <ul class="auth-points">
+      <li>Monthly budgets that warn you before you overspend</li>
+      <li>Filter by date, category, UPI, card or cash</li>
+      <li>A year of spending on one chart</li>
+    </ul>
+  </section>
+
+  <section class="auth-card">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-login" aria-selected="true" data-auth-tab="login">Log in</button>
+      <button type="button" role="tab" id="tab-register" aria-selected="false" data-auth-tab="register">Create account</button>
+    </div>
+
+    <form id="login-form" class="stack" autocomplete="on">
+      <label>Username<input id="login-username" name="username" autocomplete="username" required></label>
+      <label>Password<input id="login-password" name="password" type="password" autocomplete="current-password" required></label>
+      <p class="form-error" data-error hidden></p>
+      <button class="btn btn-primary" type="submit">Log in</button>
+    </form>
+
+    <form id="register-form" class="stack" hidden>
+      <label>Username<input id="reg-username" name="username" autocomplete="username" required minlength="3" maxlength="50" pattern="[A-Za-z0-9_]+" title="Letters, numbers and _ only"></label>
+      <label>Email<input id="reg-email" name="email" type="email" autocomplete="email" required></label>
+      <label>Full name <span class="muted">(optional)</span><input id="reg-fullname" name="full_name" autocomplete="name" maxlength="100"></label>
+      <label>Password<input id="reg-password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="72"></label>
+      <p class="hint">At least 8 characters.</p>
+      <p class="form-error" data-error hidden></p>
+      <button class="btn btn-primary" type="submit">Create account</button>
+    </form>
+  </section>
+</div>
+
+<!-- ============ Main app ============ -->
+<div id="app-view" hidden>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/dashboard"><span class="brand-mark">₹</span>Kharcha</a>
+      <nav class="nav" aria-label="Main">
+        <a href="#/dashboard" data-nav="dashboard">Dashboard</a>
+        <a href="#/expenses" data-nav="expenses">Expenses</a>
+        <a href="#/categories" data-nav="categories">Categories</a>
+      </nav>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" type="button" data-action="add-expense"><span aria-hidden="true">+</span> Add expense</button>
+        <div class="user">
+          <span id="user-name" class="user-name"></span>
+          <button class="btn btn-quiet" type="button" data-action="logout">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <!-- Dashboard -->
+    <section id="view-dashboard" class="view" hidden>
+      <div class="view-head">
+        <div class="month-switch">
+          <button class="icon-btn" type="button" data-action="prev-month" aria-label="Previous month">‹</button>
+          <h1 id="dash-month">—</h1>
+          <button class="icon-btn" type="button" data-action="next-month" aria-label="Next month">›</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat stat-main">
+          <span class="stat-label">Spent this month</span>
+          <span class="stat-value" id="stat-total">—</span>
+          <span class="stat-note" id="stat-compare"></span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Expenses</span>
+          <span class="stat-value" id="stat-count">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Daily average</span>
+          <span class="stat-value" id="stat-daily">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Budget used</span>
+          <span class="stat-value" id="stat-budget">—</span>
+          <span class="stat-note" id="stat-budget-note"></span>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <article class="panel">
+          <header class="panel-head"><h2>Budgets</h2><a href="#/categories" class="link">Edit budgets</a></header>
+          <ul id="budget-list" class="budget-list"></ul>
+        </article>
+
+        <div class="dash-side">
+          <article class="panel">
+            <header class="panel-head"><h2 id="year-title">This year</h2><span class="muted" id="year-total"></span></header>
+            <div id="year-chart" class="chart"></div>
+          </article>
+          <article class="panel">
+            <header class="panel-head"><h2>Recent</h2><a href="#/expenses" class="link">See all</a></header>
+            <ul id="recent-list" class="recent-list"></ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expenses -->
+    <section id="view-expenses" class="view" hidden>
+      <div class="view-head">
+        <h1>Expenses</h1>
+        <span class="muted" id="exp-summary"></span>
+      </div>
+
+      <form id="filters" class="filters">
+        <label>From<input type="date" name="start_date" id="f-start"></label>
+        <label>To<input type="date" name="end_date" id="f-end"></label>
+        <label>Category<select name="category" id="f-category"></select></label>
+        <label>Paid by<select name="payment_method" id="f-method">
+          <option value="">Any</option>
+          <option value="upi">UPI</option>
+          <option value="card">Card</option>
+          <option value="cash">Cash</option>
+          <option value="netbanking">Netbanking</option>
+          <option value="other">Other</option>
+        </select></label>
+        <label class="grow">Search<input type="search" name="search" id="f-search" placeholder="e.g. lunch, uber, rent"></label>
+        <label>Sort<select name="sort" id="f-sort">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="highest">Highest amount</option>
+          <option value="lowest">Lowest amount</option>
+        </select></label>
+        <button type="reset" class="btn btn-quiet">Clear</button>
+      </form>
+
+      <div class="panel panel-flush">
+        <table class="ledger">
+          <thead>
+            <tr><th>Date</th><th>Description</th><th>Category</th><th>Paid by</th><th class="num">Amount</th><th><span class="sr-only">Actions</span></th></tr>
+          </thead>
+          <tbody id="exp-rows"></tbody>
+        </table>
+        <div id="exp-empty" class="empty" hidden></div>
+      </div>
+
+      <div class="pager">
+        <button class="btn btn-quiet" type="button" data-action="page-prev">‹ Previous</button>
+        <span id="page-info" class="muted"></span>
+        <button class="btn btn-quiet" type="button" data-action="page-next">Next ›</button>
+      </div>
+    </section>
+
+    <!-- Categories -->
+    <section id="view-categories" class="view" hidden>
+      <div class="view-head">
+        <h1>Categories</h1>
+        <span class="muted">Budgets reset every month</span>
+      </div>
+
+      <form id="category-form" class="panel inline-form">
+        <label class="grow">New category<input id="cat-name" name="name" required maxlength="50" placeholder="e.g. Rent, Gym, Travel"></label>
+        <label>Monthly budget <span class="muted">(₹, optional)</span><input id="cat-budget" name="monthly_budget" type="number" min="0" step="0.01" inputmode="decimal"></label>
+        <button class="btn btn-primary" type="submit">Add category</button>
+      </form>
+
+      <div class="panel panel-flush">
+        <table class="ledger">
+          <thead><tr><th>Category</th><th class="num">Spent this month</th><th class="num">Monthly budget</th><th><span class="sr-only">Actions</span></th></tr></thead>
+          <tbody id="cat-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ============ Add / edit expense ============ -->
+<dialog id="expense-dialog" class="dialog">
+  <form id="expense-form" class="stack" method="dialog">
+    <header class="dialog-head">
+      <h2 id="expense-dialog-title">Add expense</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Close">×</button>
+    </header>
+    <label>Amount (₹)<input id="e-amount" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required class="input-amount"></label>
+    <label>Description<input id="e-description" name="description" required maxlength="255" placeholder="What was it for?"></label>
+    <div class="row">
+      <label>Date<input id="e-date" name="spent_on" type="date" required></label>
+      <label>Category<select id="e-category" name="category_id"></select></label>
+    </div>
+    <fieldset class="segmented">
+      <legend>Paid by</legend>
+      <label><input type="radio" name="payment_method" value="upi" checked><span>UPI</span></label>
+      <label><input type="radio" name="payment_method" value="card"><span>Card</span></label>
+      <label><input type="radio" name="payment_method" value="cash"><span>Cash</span></label>
+      <label><input type="radio" name="payment_method" value="netbanking"><span>Netbanking</span></label>
+      <label><input type="radio" name="payment_method" value="other"><span>Other</span></label>
+    </fieldset>
+    <p class="form-error" data-error hidden></p>
+    <footer class="dialog-foot">
+      <button type="button" class="btn btn-danger-quiet" id="e-delete" hidden>Delete</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-quiet" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary" id="e-submit">Save expense</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- ============ Edit category ============ -->
+<dialog id="category-dialog" class="dialog">
+  <form id="category-edit-form" class="stack" method="dialog">
+    <header class="dialog-head">
+      <h2>Edit category</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Close">×</button>
+    </header>
+    <label>Name<input id="c-name" name="name" required maxlength="50"></label>
+    <label>Monthly budget (₹) <span class="muted">— leave empty for no budget</span><input id="c-budget" name="monthly_budget" type="number" min="0" step="0.01" inputmode="decimal"></label>
+    <p class="form-error" data-error hidden></p>
+    <footer class="dialog-foot">
+      <span class="spacer"></span>
+      <button type="button" class="btn btn-quiet" data-close>Cancel</button>
+      <button type="submit" class="btn btn-primary">Save</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- ============ Confirm ============ -->
+<dialog id="confirm-dialog" class="dialog dialog-sm">
+  <form class="stack" method="dialog">
+    <h2 id="confirm-title">Are you sure?</h2>
+    <p id="confirm-text" class="muted"></p>
+    <footer class="dialog-foot">
+      <span class="spacer"></span>
+      <button value="cancel" class="btn btn-quiet">Cancel</button>
+      <button value="ok" class="btn btn-danger" id="confirm-ok">Delete</button>
+    </footer>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

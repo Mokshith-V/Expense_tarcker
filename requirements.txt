@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+sqlalchemy>=2.0
+pymysql
+cryptography            # needed by pymysql for MySQL 8 login (caching_sha2_password)
+passlib==1.7.4
+bcrypt==4.0.1           # newer bcrypt versions break passlib
+python-jose[cryptography]
+python-multipart        # needed for the login form (OAuth2PasswordRequestForm)
+python-dotenv
+email-validator         # needed for EmailStr
+pytest
+httpx                   # needed by TestClient
